@@ -54,23 +54,23 @@ distcheck:
 
 publish:
 	@test "$$CONFIRM_PUBLISH" = "1" || (echo "Refusing to publish: set CONFIRM_PUBLISH=1"; exit 2)
-	@test -n "$$TWINE_USERNAME" || (echo "Missing TWINE_USERNAME (use __token__ for API tokens)"; exit 2)
-	@test -n "$$TWINE_PASSWORD" || (echo "Missing TWINE_PASSWORD (paste your PyPI API token here)"; exit 2)
+	@test -n "$$TWINE_API_KEY" || (echo "Missing TWINE_API_KEY"; exit 2)
 	$(PIP) install --upgrade build twine
 	rm -rf dist
 	$(PYTHON) -m build
 	twine check dist/*
-	twine upload --repository-url "$(PUBLISH_REPOSITORY_URL)" dist/*
+	TWINE_API_KEY="$$TWINE_API_KEY" \
+		twine upload --repository-url "$(PUBLISH_REPOSITORY_URL)" dist/*
 
 publish-test:
 	@test "$$CONFIRM_PUBLISH" = "1" || (echo "Refusing to publish: set CONFIRM_PUBLISH=1"; exit 2)
-	@test -n "$$TWINE_USERNAME" || (echo "Missing TWINE_USERNAME (use __token__ for API tokens)"; exit 2)
-	@test -n "$$TWINE_PASSWORD" || (echo "Missing TWINE_PASSWORD (paste your TestPyPI API token here)"; exit 2)
+	@test -n "$$TWINE_API_KEY" || (echo "Missing TWINE_API_KEY"; exit 2)
 	$(PIP) install --upgrade build twine
 	rm -rf dist
 	$(PYTHON) -m build
 	twine check dist/*
-	twine upload --repository-url "$(PUBLISH_TEST_REPOSITORY_URL)" dist/*
+	TWINE_API_KEY="$$TWINE_API_KEY" \
+		twine upload --verbose --repository-url "$(PUBLISH_TEST_REPOSITORY_URL)" dist/*
 
 clean:
 	rm -rf dist build .pytest_cache .ruff_cache .mypy_cache *.egg-info .coverage coverage.xml
