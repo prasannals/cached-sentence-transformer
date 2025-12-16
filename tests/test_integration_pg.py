@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import uuid
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any
 
 import numpy as np
 import psycopg2
@@ -76,12 +76,12 @@ class _DummySentenceTransformer:
         None.
     """
 
-    name_or_path: Optional[str] = None
-    truncate_dim: Optional[int] = None
+    name_or_path: str | None = None
+    truncate_dim: int | None = None
     encode_calls: int = 0
-    last_sentences: List[str] | None = None
+    last_sentences: list[str] | None = None
 
-    def __init__(self, model_name_or_path: Optional[str] = None, *, truncate_dim: Optional[int] = None, **kwargs: Any) -> None:
+    def __init__(self, model_name_or_path: str | None = None, *, truncate_dim: int | None = None, **kwargs: Any) -> None:
         """Create a dummy model compatible with the wrapper's initialization call.
 
         Args:
@@ -123,15 +123,15 @@ class _DummySentenceTransformer:
 
     def encode(
         self,
-        sentences: List[str],
+        sentences: list[str],
         *,
         batch_size: int = 32,
-        show_progress_bar: Optional[bool] = None,
+        show_progress_bar: bool | None = None,
         output_value: str = "sentence_embedding",
         convert_to_numpy: bool = True,
         convert_to_tensor: bool = False,
-        device: Optional[str] = None,
-        normalize_embeddings: Optional[bool] = None,
+        device: str | None = None,
+        normalize_embeddings: bool | None = None,
         **kwargs: Any,
     ) -> np.ndarray:
         """Return deterministic fake embeddings for the provided sentences.

@@ -6,12 +6,12 @@ them back into numpy arrays.
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 
 
-def vector_to_bytes(vec: Union[np.ndarray, Sequence[float]]) -> bytes:
+def vector_to_bytes(vec: np.ndarray | Sequence[float]) -> bytes:
     """Convert an embedding vector to a compact float32 byte representation.
 
     Args:

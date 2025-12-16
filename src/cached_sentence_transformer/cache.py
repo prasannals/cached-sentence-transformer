@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -41,11 +41,11 @@ class CachedSentenceTransformer:
 
     def __init__(
         self,
-        model_name_or_path: Optional[str] = None,
+        model_name_or_path: str | None = None,
         *,
-        pg_dsn: Optional[str] = None,
-        table_name: Optional[str] = None,
-        truncate_dim: Optional[int] = None,
+        pg_dsn: str | None = None,
+        table_name: str | None = None,
+        truncate_dim: int | None = None,
         get_batch_limit: int = 50000,
         add_batch_limit: int = 20000,
         **kwargs: Any,
@@ -135,17 +135,17 @@ class CachedSentenceTransformer:
 
     def encode(
         self,
-        sentences: Union[str, List[str]],
+        sentences: str | list[str],
         *,
         batch_size: int = 32,
-        show_progress_bar: Optional[bool] = None,
+        show_progress_bar: bool | None = None,
         output_value: str = "sentence_embedding",
         convert_to_numpy: bool = True,
         convert_to_tensor: bool = False,
-        device: Optional[str] = None,
-        normalize_embeddings: Optional[bool] = None,
+        device: str | None = None,
+        normalize_embeddings: bool | None = None,
         **kwargs: Any,
-    ) -> Union[List[float], np.ndarray, torch.Tensor]:
+    ) -> list[float] | np.ndarray | torch.Tensor:
         """Encode sentences while caching embeddings in PostgreSQL by stable id.
 
         Args:
@@ -178,7 +178,7 @@ class CachedSentenceTransformer:
             inference and allocate CPU/GPU memory; may log cache hit/miss stats.
         """
         single_input = isinstance(sentences, str)
-        texts: List[str] = [sentences] if single_input else list(sentences)
+        texts: list[str] = [sentences] if single_input else list(sentences)
         if len(texts) == 0:
             return (
                 torch.empty((0, 0), device=device)
@@ -187,17 +187,17 @@ class CachedSentenceTransformer:
             )
 
         logger = logging.getLogger(__name__)
-        ids: List[str] = [stable_id(self._model_key, t, normalize_embeddings) for t in texts]
+        ids: list[str] = [stable_id(self._model_key, t, normalize_embeddings) for t in texts]
 
-        unique_ids: List[str] = list(dict.fromkeys(ids))
+        unique_ids: list[str] = list(dict.fromkeys(ids))
         logger.debug("PG Cache GET: %d unique ids (batch=%d)", len(unique_ids), self._get_batch_limit)
-        cached_bytes: Dict[str, bytes] = self._store.fetch_many(
+        cached_bytes: dict[str, bytes] = self._store.fetch_many(
             unique_ids, batch_size=self._get_batch_limit, show_pbar=bool(show_progress_bar)
         )
 
-        missing_positions: List[int] = []
-        missing_ids: List[str] = []
-        missing_texts: List[str] = []
+        missing_positions: list[int] = []
+        missing_ids: list[str] = []
+        missing_texts: list[str] = []
 
         missing_id_set = set(unique_ids) - set(cached_bytes.keys())
         missing_seen: set[str] = set()
@@ -230,14 +230,14 @@ class CachedSentenceTransformer:
                 comp = computed.astype(np.float32, copy=False)
             else:
                 comp = np.asarray(computed, dtype=np.float32)
-            id_to_bytes: Dict[str, bytes] = {rec_id: vector_to_bytes(comp[i]) for i, rec_id in enumerate(missing_ids)}
+            id_to_bytes: dict[str, bytes] = {rec_id: vector_to_bytes(comp[i]) for i, rec_id in enumerate(missing_ids)}
             self._store.insert_many(
                 id_to_bytes, batch_size=self._add_batch_limit, show_pbar=bool(show_progress_bar)
             )
             cached_bytes.update(id_to_bytes)
 
         if convert_to_tensor or convert_to_numpy:
-            vectors: List[np.ndarray] = [bytes_to_vector(cached_bytes[rec_id]) for rec_id in ids]
+            vectors: list[np.ndarray] = [bytes_to_vector(cached_bytes[rec_id]) for rec_id in ids]
             arr = np.vstack(vectors)
             if convert_to_tensor:
                 underlying_device = getattr(self._st, "device", None)

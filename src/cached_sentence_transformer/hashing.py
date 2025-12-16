@@ -7,10 +7,9 @@ call sites.
 from __future__ import annotations
 
 import hashlib
-from typing import Optional
 
 
-def stable_id(model_key: str, text: str, normalize: Optional[bool]) -> str:
+def stable_id(model_key: str, text: str, normalize: bool | None) -> str:
     """Compute a stable cache key for (model, normalize flag, text).
 
     Args:
@@ -34,7 +33,7 @@ def stable_id(model_key: str, text: str, normalize: Optional[bool]) -> str:
         norm_flag = "F"
     else:
         norm_flag = "N"
-    payload = f"model={model_key}||norm={norm_flag}||text={text}".encode("utf-8")
+    payload = f"model={model_key}||norm={norm_flag}||text={text}".encode()
     hasher.update(payload)
     return hasher.hexdigest()
 

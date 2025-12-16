@@ -7,7 +7,6 @@ for storing embeddings as BYTEA by TEXT ids.
 from __future__ import annotations
 
 import logging
-from typing import Dict, List
 
 import psycopg2
 from psycopg2 import sql
@@ -83,7 +82,7 @@ class PostgresKVStore:
                 ).format(table=sql.Identifier(self._table))
             )
 
-    def fetch_many(self, ids: List[str], *, batch_size: int = 50000, show_pbar: bool = False) -> Dict[str, bytes]:
+    def fetch_many(self, ids: list[str], *, batch_size: int = 50000, show_pbar: bool = False) -> dict[str, bytes]:
         """Fetch cached values for many ids from PostgreSQL in batches.
 
         Args:
@@ -101,7 +100,7 @@ class PostgresKVStore:
         Side Effects:
             Executes SELECT statements against PostgreSQL; may create a progress bar.
         """
-        result: Dict[str, bytes] = {}
+        result: dict[str, bytes] = {}
         if not ids:
             return result
         if batch_size <= 0:
@@ -124,7 +123,7 @@ class PostgresKVStore:
             pbar.close()
         return result
 
-    def insert_many(self, id_to_vec: Dict[str, bytes], *, batch_size: int = 20000, show_pbar: bool = False) -> None:
+    def insert_many(self, id_to_vec: dict[str, bytes], *, batch_size: int = 20000, show_pbar: bool = False) -> None:
         """Insert many (id, vec) records into PostgreSQL using batched upserts.
 
         Args:

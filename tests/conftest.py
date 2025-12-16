@@ -6,7 +6,8 @@ cache logic without a running database.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from collections.abc import Iterable
+from typing import Any
 
 import numpy as np
 import pytest
@@ -47,7 +48,7 @@ class FakeSQL:
         def __init__(self, s: str) -> None:
             self._s = s
 
-        def format(self, **kwargs: Any) -> "FakeSQL._SQLStr":
+        def format(self, **kwargs: Any) -> FakeSQL._SQLStr:
             out = self._s
             for k, v in kwargs.items():
                 out = out.replace("{" + k + "}", str(v))
@@ -82,7 +83,7 @@ class FakeSQL:
             return f'"{self._name}"'
 
     @staticmethod
-    def SQL(s: str) -> "FakeSQL._SQLStr":
+    def SQL(s: str) -> FakeSQL._SQLStr:
         """Create a fake SQL object.
 
         Args:
@@ -116,19 +117,19 @@ class FakeCursor:
         Stores the last executed query/params for debugging.
     """
 
-    def __init__(self, conn: "FakeConn") -> None:
+    def __init__(self, conn: FakeConn) -> None:
         self._conn = conn
-        self._results: List[Tuple[str, bytes]] = []
-        self.last_query: Optional[str] = None
-        self.last_params: Optional[Tuple[Any, ...]] = None
+        self._results: list[tuple[str, bytes]] = []
+        self.last_query: str | None = None
+        self.last_params: tuple[Any, ...] | None = None
 
-    def __enter__(self) -> "FakeCursor":
+    def __enter__(self) -> FakeCursor:
         return self
 
     def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:  # noqa: ANN401
         return None
 
-    def execute(self, query: Any, params: Optional[Tuple[Any, ...]] = None) -> None:
+    def execute(self, query: Any, params: tuple[Any, ...] | None = None) -> None:
         q = str(query)
         self.last_query = q
         self.last_params = params
@@ -137,7 +138,7 @@ class FakeCursor:
             assert params is not None
             chunk = params[0]
             assert isinstance(chunk, list)
-            out: List[Tuple[str, bytes]] = []
+            out: list[tuple[str, bytes]] = []
             for k in chunk:
                 if k in self._conn.kv:
                     out.append((k, self._conn.kv[k]))
@@ -146,7 +147,7 @@ class FakeCursor:
 
         self._results = []
 
-    def fetchall(self) -> List[Tuple[str, bytes]]:
+    def fetchall(self) -> list[tuple[str, bytes]]:
         return list(self._results)
 
 
@@ -166,7 +167,7 @@ class FakeConn:
         None.
     """
 
-    def __init__(self, kv: Dict[str, bytes]) -> None:
+    def __init__(self, kv: dict[str, bytes]) -> None:
         self.kv = kv
         self.autocommit = False
         self.closed = False
@@ -196,11 +197,11 @@ class DummySentenceTransformer:
         None.
     """
 
-    def __init__(self, model_name_or_path: Optional[str] = None, *, truncate_dim: Optional[int] = None, **kwargs: Any) -> None:
+    def __init__(self, model_name_or_path: str | None = None, *, truncate_dim: int | None = None, **kwargs: Any) -> None:
         self.name_or_path = model_name_or_path
         self._device = "cpu"
         self.encode_calls = 0
-        self.last_sentences: Optional[List[str]] = None
+        self.last_sentences: list[str] | None = None
 
     @property
     def device(self) -> str:
@@ -220,7 +221,7 @@ class DummySentenceTransformer:
         """
         return self._device
 
-    def encode(self, sentences: List[str], **kwargs: Any) -> np.ndarray:  # noqa: ANN401
+    def encode(self, sentences: list[str], **kwargs: Any) -> np.ndarray:  # noqa: ANN401
         """Return deterministic fake embeddings for the provided sentences.
 
         Args:
@@ -248,7 +249,7 @@ class DummySentenceTransformer:
 
 
 @pytest.fixture()
-def fake_kv(monkeypatch: pytest.MonkeyPatch) -> Dict[str, bytes]:
+def fake_kv(monkeypatch: pytest.MonkeyPatch) -> dict[str, bytes]:
     """Patch pg_kv_store to use an in-memory Postgres implementation and return its store.
 
     Args:
@@ -265,13 +266,13 @@ def fake_kv(monkeypatch: pytest.MonkeyPatch) -> Dict[str, bytes]:
     """
     import cached_sentence_transformer.postgres_kv_store as kv_mod
 
-    kv: Dict[str, bytes] = {}
+    kv: dict[str, bytes] = {}
 
     monkeypatch.setattr(kv_mod, "sql", FakeSQL)
     monkeypatch.setattr(kv_mod.psycopg2, "connect", lambda dsn: FakeConn(kv))  # noqa: ARG005
     monkeypatch.setattr(kv_mod.psycopg2, "Binary", lambda b: b)
 
-    def _fake_execute_values(cur: FakeCursor, query: str, values: Iterable[Tuple[str, bytes]], page_size: int) -> None:  # noqa: ARG001
+    def _fake_execute_values(cur: FakeCursor, query: str, values: Iterable[tuple[str, bytes]], page_size: int) -> None:  # noqa: ARG001
         for k, v in values:
             if k not in kv:
                 kv[k] = bytes(v)
