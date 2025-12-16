@@ -34,7 +34,7 @@ lint:
 	ruff check .
 
 test-unit:
-	pytest -m "not integration" --cov=cached_sentence_transformer --cov-report=term-missing --cov-fail-under=90
+	pytest -m "not integration" --cov=cached_sentence_transformer --cov-report=term-missing --cov-fail-under=90 --cov-report=xml 
 
 test-integration:
 	@test -n "$$PG_DSN" || (echo "PG_DSN must be set for integration tests. Example: PG_DSN='host=localhost port=5432 dbname=postgres user=postgres password=postgres'"; exit 2)
