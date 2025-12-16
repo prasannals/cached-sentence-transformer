@@ -1,5 +1,7 @@
 # Cached Sentence Transformer
 
+[![codecov](https://codecov.io/gh/prasannals/cached-sentence-transformer/graph/badge.svg?token=ZYN468X48X)](https://codecov.io/gh/prasannals/cached-sentence-transformer) [![Tests](https://github.com/prasannals/cached-sentence-transformer/actions/workflows/ci.yml/badge.svg)](https://github.com/prasannals/cached-sentence-transformer/actions/workflows/ci.yml)
+
 PostgreSQL-backed embedding cache for [SentenceTransformers](https://www.sbert.net/).
 
 This package provides a small wrapper that caches computed sentence embeddings in a Postgres
