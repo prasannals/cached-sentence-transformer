@@ -25,8 +25,7 @@ dependencies = [
   "numpy>=1.23",
   "torch",
   "sentence-transformers>=2.2",
-  "psycopg2>=2.9; python_version < '3.13'",
-  "psycopg2-binary>=2.9; python_version >= '3.13'",
+  "psycopg2-binary>=2.9",
   "tqdm>=4.60",
   "python-dotenv>=1.0",
 ]
